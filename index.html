@@ -202,11 +202,24 @@ async function loadCSV(){
 
   try{
     const text = await fetchCsvSmart(original);
+
+    /* >>> YOUR REQUESTED PATCH STARTS HERE <<< */
+    .then // dummy anchor for readability (no effect)
+    /* The promise above returns plain text; emulate your .then block inline: */
+    /* If we accidentally fetched a GitHub "contents" JSON (folder listing), auto-switch. */
+    if (looksLikeGithubFolderJson(text)) {
+      log("Detected a GitHub folder listing. Switching to 'List CSVs' flow...");
+      listFolderCSVs();
+      return; // stop CSV parsing
+    }
     log(`Downloaded ${Math.round(text.length/1024)} KB`);
-    const parsed = Papa.parse(text, {header:true, skipEmptyLines:true});
-    allData = parsed.data;
-    log(`Parsed rows: ${allData.length}`);
-    populatePlayers(allData);
+    Papa.parse(text,{header:true,skipEmptyLines:true,complete:(res)=>{
+      allData = res.data;
+      log(`Parsed rows: ${allData.length}`);
+      populatePlayers(allData);
+    }});
+    /* >>> YOUR REQUESTED PATCH ENDS HERE <<< */
+
   }catch(e){
     log(`ERROR: ${e.message}`);
     alert(`Failed to load CSV:\n${e.message}`);
@@ -371,6 +384,18 @@ async function listFolderCSVs(){
     log("Error listing: " + e.message);
     alert("Error listing CSVs: " + e.message);
   }
+}
+
+/* ---------- Helper you asked to add ---------- */
+function looksLikeGithubFolderJson(text){
+  const t = text.trim();
+  if (!(t.startsWith("{") || t.startsWith("["))) return false;
+  try {
+    const j = JSON.parse(t);
+    // Folder listing is an array of objects with 'type' fields like 'file' / 'dir'
+    if (Array.isArray(j) && j.length && typeof j[0] === "object" && "type" in j[0]) return true;
+    return false;
+  } catch { return false; }
 }
 
 /* init */
