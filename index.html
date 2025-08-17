@@ -1,405 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>NFL Player ↔ Team Dashboard (GitHub Pages)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Week 1 — Performance vs Madden</title>
 <style>
-  :root{ --bg:#0b1022; --bg2:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --soft:#1e293b; }
-  html,body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg2) 35%,var(--bg));color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
-  header{padding:14px 16px;border-bottom:1px solid #1f2937;background:rgba(0,0,0,.3);backdrop-filter:blur(6px);position:sticky;top:0;z-index:5}
-  h1{margin:0;font-size:18px}
-  .wrap{display:grid;grid-template-columns:1fr;gap:14px;padding:14px}
-  @media(min-width:980px){ .wrap{grid-template-columns:360px 1fr} }
-  .panel{background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:12px}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  label{font-size:12px;color:var(--muted)}
-  select,input,button{background:#0b1222;border:1px solid #243244;color:var(--text);border-radius:8px;padding:10px;font-size:14px;width:100%}
-  button{cursor:pointer}
-  .list{max-height:420px;overflow:auto;border-radius:10px;background:#0b1222;border:1px solid #1f2937}
-  .linkrow{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;padding:10px;border-bottom:1px solid #152137}
-  .linkrow:last-child{border-bottom:0}
-  .badge{font-size:11px;color:#89a;border:1px solid #2a3b55;border-radius:6px;padding:2px 6px;background:#0b1624}
-  canvas{background:var(--soft);border-radius:12px}
-  #console{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:#0b1222;border:1px solid #1f2937;border-radius:8px;padding:8px;max-height:180px;overflow:auto;white-space:pre-wrap}
-  .small{font-size:12px;color:var(--muted)}
+  :root {
+    --bg:#0b1022; --panel:#12172b; --soft:#1a2240; --text:#e7ecff; --muted:#a7b1d9; --good:#11c46a; --bad:#ff5d5d; --accent:#6fe3ff;
+  }
+  html,body{margin:0;padding:0;background:linear-gradient(180deg,#0a0f22,#0b1022 40%,#080c1a);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Ubuntu,sans-serif}
+  header{position:sticky;top:0;z-index:10;background:rgba(11,16,34,0.85);backdrop-filter:saturate(160%) blur(10px);padding:10px 12px;border-bottom:1px solid #1e2644}
+  h1{margin:0;font-size:18px;letter-spacing:.2px}
+  .controls{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  input,select,button{appearance:none;background:var(--soft);color:var(--text);border:1px solid #273059;border-radius:12px;padding:10px 12px;font-size:14px}
+  input[type=search]{flex:1;min-width:46%}
+  select{min-width:120px}
+  button{border-color:#2d6cff}
+  .wrap{padding:14px}
+  .grid{display:grid;grid-template-columns:1fr;gap:10px}
+  @media(min-width:700px){.grid{grid-template-columns:1fr 1fr}}
+  .card{background:linear-gradient(180deg,rgba(23,33,62,.9),rgba(18,23,43,.95));border:1px solid #1e2748;border-radius:16px;padding:12px;display:flex;gap:10px;align-items:center}
+  .badge{background:#0f1634;border:1px solid #26305b;color:#c6d2ff;border-radius:10px;padding:4px 8px;font-size:12px}
+  .ovr{font-weight:700;color:#ffd76b}
+  .delta{font-weight:700}
+  .delta.pos{color:var(--good)}
+  .delta.neg{color:var(--bad)}
+  .name{font-size:16px;font-weight:700}
+  .muted{color:var(--muted)}
+  .stats{font-size:13px;color:#dce6ff}
+  .row{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .sub{font-size:12px;color:var(--muted)}
+  .pill{background:#0f1938;border:1px solid #2a3563;border-radius:999px;padding:4px 8px;font-size:12px}
+  .footer{text-align:center;color:var(--muted);font-size:12px;margin:18px 0}
 </style>
 </head>
 <body>
-<header><h1>NFL Player ↔ Team Dashboard</h1></header>
-
+<header>
+  <h1>Week 1 · Performance vs. Madden</h1>
+  <div class="controls">
+    <input id="q" type="search" placeholder="Search player (e.g., Kupp, Allen, Worthy)">
+    <select id="team">
+      <option value="">All teams</option>
+      <option value="ARI">ARI</option><option value="BAL">BAL</option><option value="BUF">BUF</option><option value="CAR">CAR</option><option value="CHI">CHI</option><option value="DET">DET</option><option value="DEN">DEN</option><option value="HOU">HOU</option><option value="IND">IND</option><option value="KC">KC</option><option value="LA">LA</option><option value="NO">NO</option><option value="NYJ">NYJ</option><option value="SEA">SEA</option><option value="SF">SF</option><option value="TB">TB</option><option value="TEN">TEN</option><option value="WAS">WAS</option>
+    </select>
+    <select id="sort">
+      <option value="delta">Biggest surprises</option>
+      <option value="perf_score">Best performance</option>
+      <option value="madden_ovr">Madden OVR</option>
+      <option value="name">Name A→Z</option>
+    </select>
+    <button id="export">Export CSV</button>
+  </div>
+</header>
 <div class="wrap">
-  <!-- LEFT -->
-  <div class="panel">
-    <div class="row">
-      <div style="flex:1">
-        <label>Year</label>
-        <select id="yearSelect">
-          <option value="2023" selected>2023</option>
-          <option value="2024">2024 (placeholder)</option>
-          <option value="2022">2022 (placeholder)</option>
-        </select>
-      </div>
-      <div style="flex:1">
-        <label>List</label>
-        <select id="listType">
-          <option value="permalinks" selected>Permalinks (folders & pages)</option>
-          <option value="rawcsvs">Direct CSVs</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row" style="flex-direction:column;align-items:stretch;margin-top:10px">
-      <label for="csvPath">Selected URL (CSV or folder)</label>
-      <input id="csvPath" placeholder="Paste or pick a URL below" />
-      <div class="row" style="width:100%">
-        <button style="flex:1" onclick="loadCSV()">Load CSV (via network)</button>
-        <button style="flex:1" onclick="listFolderCSVs()">List CSVs (if folder)</button>
-      </div>
-
-      <div class="row" style="width:100%;margin-top:8px">
-        <input id="fileInput" type="file" accept=".csv,text/csv" />
-        <button style="flex:1" onclick="loadLocalFile()">Upload CSV (from device)</button>
-      </div>
-      <div class="small">On GitHub Pages, URL loading works. Upload CSV is just a fallback.</div>
-    </div>
-
-    <div style="margin-top:10px">
-      <label>Links for <span id="yearLabel">2023</span></label>
-      <div id="linksList" class="list"></div>
-    </div>
-
-    <div style="margin-top:10px">
-      <label>Console</label>
-      <div id="console">Ready.</div>
-    </div>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="panel">
-    <div class="row">
-      <div style="flex:1">
-        <label for="playerSelect">Select Player</label>
-        <select id="playerSelect"></select>
-      </div>
-      <div style="flex:1">
-        <label for="teamSelect">Select Defense (Opponent Team)</label>
-        <select id="teamSelect">
-          <option>ARI</option><option>ATL</option><option>BAL</option><option>BUF</option><option>CAR</option><option>CHI</option>
-          <option>CIN</option><option>CLE</option><option>DAL</option><option>DEN</option><option>DET</option><option>GB</option>
-          <option>HOU</option><option>IND</option><option>JAX</option><option>KC</option><option>LAC</option><option>LAR</option>
-          <option>LV</option><option>MIA</option><option>MIN</option><option>NE</option><option>NO</option><option>NYG</option>
-          <option>NYJ</option><option>PHI</option><option>PIT</option><option>SEA</option><option>SF</option><option>TB</option>
-          <option>TEN</option><option>WAS</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" style="margin:10px 0">
-      <button onclick="compare()">Compare Player vs Team</button>
-      <span class="small">Load a weekly player CSV to enable the comparison chart.</span>
-    </div>
-    <canvas id="chart" height="120"></canvas>
-  </div>
+  <div id="list" class="grid"></div>
+  <div class="footer">Built from your Week 1 game files &amp; Madden 25 ratings. On iPhone, tap a card to copy stats.</div>
 </div>
 
 <script>
-/* ---------------- 2023 links ---------------- */
-const LINK_CATALOG = {
-  "2023": {
-    permalinks: [
-      {label:"NFL-data-Players (permalink)", url:"https://github.com/hvpkod/NFL-Data/tree/61106933131209d8fadc22c905c93fd59f79d6f4/NFL-data-Players"},
-      {label:"NFL-data-Players (main)",      url:"https://github.com/hvpkod/NFL-Data/tree/main/NFL-data-Players"},
-      {label:"2023 (permalink)",             url:"https://github.com/hvpkod/NFL-Data/tree/61106933131209d8fadc22c905c93fd59f79d6f4/NFL-data-Players/2023"},
-      ...Array.from({length:17},(_,i)=>({label:`2023 / ${i+1}`, url:`https://github.com/hvpkod/NFL-Data/tree/main/NFL-data-Players/2023/${i+1}`})),
-      {label:"DB_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/DB_season.csv"},
-      {label:"DL_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/DL_season.csv"},
-      {label:"K_season.csv (page)",  url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/K_season.csv"},
-      {label:"LB_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/LB_season.csv"},
-      {label:"QB_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/QB_season.csv"},
-      {label:"RB_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/RB_season.csv"},
-      {label:"TE_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/TE_season.csv"},
-      {label:"WR_season.csv (page)", url:"https://github.com/hvpkod/NFL-Data/blob/main/NFL-data-Players/2023/WR_season.csv"}
-    ],
-    rawcsvs: [
-      {label:"DB_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/DB_season.csv"},
-      {label:"DL_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/DL_season.csv"},
-      {label:"K_season.csv",  url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/K_season.csv"},
-      {label:"LB_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/LB_season.csv"},
-      {label:"QB_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/QB_season.csv"},
-      {label:"RB_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/RB_season.csv"},
-      {label:"TE_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/TE_season.csv"},
-      {label:"WR_season.csv", url:"https://raw.githubusercontent.com/hvpkod/NFL-Data/main/NFL-data-Players/2023/WR_season.csv"}
-    ]
-  },
-  "2024": { permalinks: [], rawcsvs: [] },
-  "2022": { permalinks: [], rawcsvs: [] }
-};
+const DATA = [{"player":"Cooper Kupp","display":"C.Kupp","team":"LA","pos":"WR","madden_ovr":88,"pass_yards":0,"pass_tds":0,"ints":0,"rush_yards":0,"rush_tds":0,"rec_yards":101,"rec_tds":0,"receptions":13,"perf_score":23.1,"exp_score":8.931675990158787,"delta":14.168324009841214}, /* … DATA TRUNCATED IN THIS VIEW … */ ];
 
-const yearSelect = document.getElementById('yearSelect');
-const listType   = document.getElementById('listType');
-const linksList  = document.getElementById('linksList');
-const csvPath    = document.getElementById('csvPath');
-const yearLabel  = document.getElementById('yearLabel');
-const consoleEl  = document.getElementById('console');
+function fmt(n, d=1){ return (Math.round(n*10**d)/10**d).toFixed(d); }
+function toCSV(rows) {
+  const cols = Object.keys(rows[0]);
+  const lines = [cols.join(',')];
+  for (const r of rows) {
+    lines.push(cols.map(c => JSON.stringify(r[c] ?? '')).join(','));
+  }
+  return lines.join('\n');
+}
 
-function setLog(t){ consoleEl.textContent = t; consoleEl.scrollTop = consoleEl.scrollHeight; }
-function log(t){ consoleEl.textContent += "\n" + t; consoleEl.scrollTop = consoleEl.scrollHeight; }
+function render() {
+  const list = document.getElementById('list');
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const team = document.getElementById('team').value;
+  const sort = document.getElementById('sort').value;
+  let rows = DATA.slice();
 
-function renderLinks(){
-  const y = yearSelect.value; yearLabel.textContent = y;
-  const items = (LINK_CATALOG[y] && LINK_CATALOG[y][listType.value]) || [];
-  linksList.innerHTML = "";
-  if (!items.length){ linksList.innerHTML = `<div class="linkrow"><span>No links for ${y}.</span></div>`; return; }
-  items.forEach(it=>{
-    const row = document.createElement('div'); row.className='linkrow';
-    const isFolder = it.url.includes('/tree/');
-    const isCsvLike = it.url.toLowerCase().endsWith('.csv');
-    const label = document.createElement('div');
-    label.innerHTML = `
-      <div style="display:flex;gap:8px;align-items:center">
-        <span>${it.label}</span>
-        <span class="badge">${isFolder?'FOLDER':(isCsvLike?'CSV':'PAGE')}</span>
+  if (q) rows = rows.filter(r => (r.player||'').toLowerCase().includes(q) || (r.display||'').toLowerCase().includes(q));
+  if (team) rows = rows.filter(r => r.team === team);
+
+  if (sort === 'delta') rows.sort((a,b)=> (b.delta??-1) - (a.delta??-1));
+  if (sort === 'perf_score') rows.sort((a,b)=> (b.perf_score??0) - (a.perf_score??0));
+  if (sort === 'madden_ovr') rows.sort((a,b)=> (b.madden_ovr??0) - (a.madden_ovr??0));
+  if (sort === 'name') rows.sort((a,b)=> (''+(a.player||a.display)).localeCompare(''+(b.player||b.display)));
+
+  list.innerHTML = '';
+  for (const r of rows) {
+    const delta = r.delta ?? 0;
+    const deltaClass = delta >= 0 ? 'pos' : 'neg';
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+      <div style="flex:1">
+        <div class="row">
+          <div class="name">${r.player || r.display} <span class="muted">(${r.team}${r.pos ? ' · '+r.pos : ''})</span></div>
+          <div class="pill">Δ <span class="delta ${deltaClass}">${fmt(delta)}</span></div>
+        </div>
+        <div class="row sub">
+          <div>Madden <span class="ovr">${Math.round(r.madden_ovr||0)}</span></div>
+          <div>Perf <b>${fmt(r.perf_score||0)}</b> · Exp ${fmt(r.exp_score||0)}</div>
+        </div>
+        <div class="stats">
+          ${statline(r)}
+        </div>
       </div>
-      <div class="small" style="word-break:break-all">${it.url}</div>`;
-    const copy = btn('Copy', ()=>navigator.clipboard.writeText(it.url));
-    const use  = btn('Use', ()=>{ csvPath.value = it.url; });
-    const act  = btn(isFolder?'List CSVs':'Load CSV', ()=>{ csvPath.value=it.url; isFolder?listFolderCSVs():loadCSV(); });
-    row.append(label, copy, use, act); linksList.appendChild(row);
-  });
-}
-function btn(t,fn){ const b=document.createElement('button'); b.textContent=t; b.onclick=fn; return b; }
-yearSelect.addEventListener('change', renderLinks);
-listType.addEventListener('change', renderLinks);
-renderLinks();
-
-/* ------------ Local file fallback ------------ */
-function loadLocalFile(){
-  const inp = document.getElementById('fileInput');
-  const f = inp.files && inp.files[0];
-  if (!f){ alert('Choose a CSV file first.'); return; }
-  setLog(`Reading local file: ${f.name} (${Math.round(f.size/1024)} KB)`);
-  const reader = new FileReader();
-  reader.onload = () => {
-    const text = reader.result;
-    const parsed = Papa.parse(text, {header:true, skipEmptyLines:true});
-    window.allData = parsed.data;
-    log(`Parsed rows: ${allData.length}`);
-    populatePlayers(allData);
-  };
-  reader.onerror = () => { log('ERROR reading file'); };
-  reader.readAsText(f);
-}
-
-/* ------------ Network loader (works on GitHub Pages) ------------ */
-let allData = []; let chart;
-
-async function loadCSV(){
-  const original = csvPath.value.trim();
-  if (!original){ alert('Paste or pick a CSV URL first.'); return; }
-  setLog(`Loading: ${original}`);
-
-  try{
-    const text = await fetchCsvSmart(original);
-
-    /* >>> YOUR REQUESTED PATCH STARTS HERE <<< */
-    .then // dummy anchor for readability (no effect)
-    /* The promise above returns plain text; emulate your .then block inline: */
-    /* If we accidentally fetched a GitHub "contents" JSON (folder listing), auto-switch. */
-    if (looksLikeGithubFolderJson(text)) {
-      log("Detected a GitHub folder listing. Switching to 'List CSVs' flow...");
-      listFolderCSVs();
-      return; // stop CSV parsing
-    }
-    log(`Downloaded ${Math.round(text.length/1024)} KB`);
-    Papa.parse(text,{header:true,skipEmptyLines:true,complete:(res)=>{
-      allData = res.data;
-      log(`Parsed rows: ${allData.length}`);
-      populatePlayers(allData);
-    }});
-    /* >>> YOUR REQUESTED PATCH ENDS HERE <<< */
-
-  }catch(e){
-    log(`ERROR: ${e.message}`);
-    alert(`Failed to load CSV:\n${e.message}`);
+    `;
+    el.addEventListener('click', ()=> {
+      const txt = `${r.player||r.display} (${r.team}${r.pos? ' · '+r.pos:''}) — Madden ${Math.round(r.madden_ovr||0)}; Perf ${fmt(r.perf_score||0)} (Exp ${fmt(r.exp_score||0)}, Δ ${fmt(delta)}). ${statline(r)}`;
+      navigator.clipboard?.writeText(txt);
+    });
+    list.appendChild(el);
   }
 }
 
-/* Try: GitHub contents API (raw) → raw.githubusercontent → jsDelivr → contents API (base64) */
-async function fetchCsvSmart(inputUrl){
-  const info = dissectGitHubUrl(inputUrl);
-  const candidates = [];
-  if (info){
-    const api = `https://api.github.com/repos/${info.owner}/${info.repo}/contents/${info.path}${info.ref?`?ref=${encodeURIComponent(info.ref)}`:""}`;
-    candidates.push({url:api, mode:'github-raw'});
-    candidates.push({url:`https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.ref||'main'}/${info.path}`, mode:'text'});
-    candidates.push({url:`https://cdn.jsdelivr.net/gh/${info.owner}/${info.repo}@${info.ref||'main'}/${info.path}`, mode:'text'});
-    candidates.push({url:api, mode:'github-base64'});
-  }else{
-    candidates.push({url:inputUrl, mode:'text'});
-  }
-
-  let lastErr;
-  for (const c of candidates){
-    try{
-      log(`Trying: ${c.url} [${c.mode}]`);
-      if (c.mode === 'github-raw'){
-        const r = await fetch(c.url, {headers:{'Accept':'application/vnd.github.v3.raw','User-Agent':'nfl-dashboard'}});
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return await r.text();
-      }else if (c.mode === 'github-base64'){
-        const r = await fetch(c.url, {headers:{'User-Agent':'nfl-dashboard'}});
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const j = await r.json();
-        if (!j.content) throw new Error('No content in API JSON');
-        return atob((j.content||'').replace(/\n/g,''));
-      }else{
-        const r = await fetch(c.url);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return await r.text();
-      }
-    }catch(e){ lastErr=e; log(` → failed: ${e.message}`); }
-  }
-  throw lastErr || new Error('All fetch strategies failed');
+function statline(r) {
+  const parts = [];
+  if ((r.pass_yards||0)!==0 || (r.pass_tds||0)!==0 || (r.ints||0)!==0) parts.push(`Pass: ${r.pass_yards}y / ${r.pass_tds} TD / ${r.ints} INT`);
+  if ((r.rush_yards||0)!==0 || (r.rush_tds||0)!==0) parts.push(`Rush: ${r.rush_yards}y / ${r.rush_tds} TD`);
+  if ((r.receptions||0)!==0 || (r.rec_yards||0)!==0 || (r.rec_tds||0)!==0) parts.push(`Rec: ${r.receptions} / ${r.rec_yards}y / ${r.rec_tds} TD`);
+  return parts.join(' • ') || '—';
 }
 
-function dissectGitHubUrl(url){
-  try{
-    const u = new URL(url);
-    if (u.hostname==='github.com'){
-      const p = u.pathname.split('/').filter(Boolean);
-      if (p.length >= 5 && (p[2]==='blob'||p[2]==='tree')){
-        const [owner,repo,kind,ref,...rest] = p;
-        return {owner,repo,ref,path:rest.join('/')};
-      }
-      if (p.length >= 5 && p[2]==='raw'){
-        const [owner,repo,kind,ref,...rest] = p;
-        return {owner,repo,ref,path:rest.join('/')};
-      }
-    }
-    if (u.hostname==='raw.githubusercontent.com'){
-      const p = u.pathname.split('/').filter(Boolean);
-      if (p.length>=4){
-        const [owner,repo,ref,...rest]=p; return {owner,repo,ref,path:rest.join('/')};
-      }
-    }
-  }catch{}
-  return null;
-}
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('team').addEventListener('change', render);
+document.getElementById('sort').addEventListener('change', render);
+document.getElementById('export').addEventListener('click', ()=> {
+  const blob = new Blob([toCSV(DATA)], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'week1_perf_vs_madden.csv';
+  a.click();
+});
 
-/* ------------ Players & chart ------------ */
-function populatePlayers(data){
-  const playerSelect = document.getElementById('playerSelect');
-  playerSelect.innerHTML = "";
-  if (!data.length){ alert("No rows found in CSV."); return; }
-
-  const cols = Object.keys(data[0]);
-  const playerKey = pick(cols, ['player','Player','full_name','name','receiver','wr']);
-  const weekKey   = pick(cols, ['week','Week','WEEK']);
-  const defKey    = pick(cols, ['defteam','def_team','opp','opponent','defense','Opp']);
-  const yardsKey  = pick(cols, ['rec_yards','receiving_yards','yards','yds','rec_yds','Yds','YDS']);
-
-  log(`Detected → player:${playerKey||'–'} week:${weekKey||'–'} def:${defKey||'–'} yards:${yardsKey||'–'}`);
-
-  const players = [...new Set(data.map(r=>r[playerKey]).filter(Boolean))].sort();
-  players.forEach(p=>{
-    const o=document.createElement('option'); o.value=p; o.text=p; playerSelect.appendChild(o);
-  });
-  if (!players.length) log('Heads-up: no player values found (season CSVs may not have per-week rows).');
-}
-
-function compare(){
-  if (!allData.length){ alert("Load a weekly player CSV first."); return; }
-  const cols = Object.keys(allData[0]);
-  const playerKey = pick(cols, ['player','Player','full_name','name','receiver','wr']);
-  const weekKey   = pick(cols, ['week','Week','WEEK']);
-  const defKey    = pick(cols, ['defteam','def_team','opp','opponent','defense','Opp']);
-  const yardsKey  = pick(cols, ['rec_yards','receiving_yards','yards','yds','rec_yds','Yds','YDS']);
-
-  if (!playerKey || !weekKey || !defKey || !yardsKey){
-    alert("Need columns: player, week, defteam, yards. Try a weekly CSV from a week folder.");
-    return;
-  }
-  const playerSel = document.getElementById('playerSelect').value;
-  const teamSel   = document.getElementById('teamSelect').value;
-  if (!playerSel){ alert("Pick a player."); return; }
-
-  const rp = allData.filter(r => (r[playerKey]||"")===playerSel);
-  const rt = allData.filter(r => (r[defKey]||"")===teamSel);
-
-  const weeks = new Set();
-  rp.forEach(r=>{ const v=r[weekKey]; if(v!==undefined && v!=="") weeks.add(String(v)); });
-  rt.forEach(r=>{ const v=r[weekKey]; if(v!==undefined && v!=="") weeks.add(String(v)); });
-  const labels = [...weeks].sort((a,b)=>parseInt(a)-parseInt(b));
-
-  const pY = labels.map(w=>{ const row=rp.find(r=>String(r[weekKey])===w); return row?num(row[yardsKey]):0; });
-
-  const buckets = {};
-  rt.forEach(r=>{
-    const w=String(r[weekKey]||""); const v=num(r[yardsKey]); if(!w) return;
-    (buckets[w] ||= []).push(v);
-  });
-  const tY = labels.map(w=>{ const arr=buckets[w]||[]; return arr.length? Math.round(10*(arr.reduce((a,b)=>a+b,0)/arr.length))/10 : 0; });
-
-  if (window.chart) chart.destroy();
-  const ctx = document.getElementById('chart').getContext('2d');
-  chart = new Chart(ctx,{ type:'line', data:{ labels, datasets:[
-    {label:`${playerSel} yards`, data:pY, fill:false},
-    {label:`${teamSel} allowed (avg)`, data:tY, fill:false}
-  ]}, options:{ responsive:true, plugins:{legend:{labels:{color:"#fff"}}},
-    scales:{x:{ticks:{color:"#ddd"}}, y:{ticks:{color:"#ddd"}}} }});
-}
-
-function pick(cols, cands){
-  const lower = cols.map(c=>c.toLowerCase());
-  for (const c of cands){ const i=lower.indexOf(c.toLowerCase()); if(i!==-1) return cols[i]; }
-  return null;
-}
-function num(v){ const n=Number(v); return isFinite(n)?n:0; }
-
-/* ------------ Folder listing (GitHub API) ------------ */
-async function listFolderCSVs(){
-  const url = csvPath.value.trim();
-  if (!url){ alert("Pick a folder permalink first."); return; }
-  const info = dissectGitHubUrl(url);
-  if (!info || !url.includes('/tree/')){ alert("That doesn't look like a GitHub folder URL."); return; }
-  const api = `https://api.github.com/repos/${info.owner}/${info.repo}/contents/${info.path}${info.ref?`?ref=${encodeURIComponent(info.ref)}`:""}`;
-  setLog(`Listing via API:\n${api}`);
-  try{
-    const r = await fetch(api);
-    log(`HTTP ${r.status}`);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const files = await r.json();
-    const csvs = files.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.csv'));
-    if (!csvs.length){ alert("No CSVs found in that folder."); return; }
-    const names = csvs.map(f=>f.name).join("\n• ");
-    const pick = prompt(`CSV files found:\n• ${names}\n\nType exact filename to load:`);
-    if (!pick) return;
-    const hit = csvs.find(f=>f.name===pick);
-    if (!hit){ alert("Not found."); return; }
-    csvPath.value = `https://api.github.com/repos/${info.owner}/${info.repo}/contents/${info.path}/${pick}${info.ref?`?ref=${encodeURIComponent(info.ref)}`:""}`;
-    loadCSV();
-  }catch(e){
-    log("Error listing: " + e.message);
-    alert("Error listing CSVs: " + e.message);
-  }
-}
-
-/* ---------- Helper you asked to add ---------- */
-function looksLikeGithubFolderJson(text){
-  const t = text.trim();
-  if (!(t.startsWith("{") || t.startsWith("["))) return false;
-  try {
-    const j = JSON.parse(t);
-    // Folder listing is an array of objects with 'type' fields like 'file' / 'dir'
-    if (Array.isArray(j) && j.length && typeof j[0] === "object" && "type" in j[0]) return true;
-    return false;
-  } catch { return false; }
-}
-
-/* init */
-setLog('Ready. Pick a link then Load CSV. If it is a folder, click "List CSVs".');
+render();
 </script>
 </body>
 </html>
