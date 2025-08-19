@@ -1,310 +1,378 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Holland Homes • PTO Dashboard (Daily)</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-  <style>
-    :root { --brand:#184A30; --ink:#1c1c1c; --muted:#6b7280; --bg:#f7f7f7; --card:#ffffff; }
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; }
-    body { margin:0; background:var(--bg); color:var(--ink); }
-    header { background:var(--brand); color:#fff; padding:16px 20px; }
-    header h1 { margin:0; font-size:18px; letter-spacing:.3px; }
-    .wrap { max-width:1200px; margin: 0 auto; padding: 20px; }
-    .row { display:grid; gap:16px; }
-    .grid-4 { grid-template-columns: repeat(4, 1fr); }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
-    .card { background:var(--card); border:1px solid #e5e7eb; border-radius:10px; padding:14px; }
-    .kpi { display:flex; align-items:baseline; gap:8px; }
-    .kpi .big { font-size:28px; font-weight:700; }
-    .kpi .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
-    .list { margin: 8px 0 0; padding:0; list-style:none; max-height:260px; overflow:auto; }
-    .list li { padding:8px 0; border-bottom:1px dashed #eee; font-size:14px; display:flex; justify-content:space-between; gap:10px; }
-    .pill { font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fafafa; color:#374151; }
-    .toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .toolbar input, .toolbar select { border:1px solid #d1d5db; border-radius:8px; padding:8px 10px; background:#fff; }
-    table { width:100%; border-collapse: collapse; font-size:14px; }
-    th, td { padding:10px 8px; border-bottom:1px solid #eee; text-align:left; }
-    th { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-    .muted { color:var(--muted); }
-    .footer { color:var(--muted); font-size:12px; margin-top:10px; }
-    .warn { color:#a16207; font-weight:600; }
-    .ok { color:#14532d; font-weight:600; }
-    canvas { width:100%; height:280px; }
-    @media (max-width: 960px){ .grid-4, .grid-3 { grid-template-columns: 1fr; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Holland Homes • PTO Requests (Daily)</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+<style>
+  :root { --brand:#184A30; --ink:#1c1c1c; --muted:#6b7280; --bg:#f7f7f7; --card:#ffffff; }
+  * { box-sizing: border-box; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+  body { margin:0; background:var(--bg); color:var(--ink); }
+  header { background:var(--brand); color:#fff; padding:16px 20px; }
+  header h1 { margin:0; font-size:18px; letter-spacing:.2px; }
+  .wrap { max-width:1200px; margin:0 auto; padding:16px; }
+  .row { display:grid; gap:12px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; }
+  .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .toolbar input, .toolbar select, .toolbar button, .toolbar label { font-size:14px; }
+  .toolbar input, .toolbar select, .toolbar button { border:1px solid #d1d5db; border-radius:8px; padding:8px 10px; background:#fff; }
+  .kpi { display:flex; align-items:baseline; gap:8px; }
+  .kpi .big { font-size:26px; font-weight:700; }
+  .kpi .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .list { margin: 8px 0 0; padding:0; list-style:none; }
+  .list li { padding:8px 0; border-bottom:1px dashed #eee; font-size:14px; display:flex; justify-content:space-between; gap:10px; }
+  .pill { font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#fafafa; color:#374151; }
+  .muted { color:var(--muted); }
+  .warn { color:#a16207; font-weight:600; }
+  .ok { color:#14532d; font-weight:600; }
+  .footer { color:var(--muted); font-size:12px; margin-top:8px; }
+
+  /* Scrollable frames */
+  .scroll-card { 
+    max-height: calc(var(--vh, 1vh) * 35);
+    overflow:auto; border-radius:12px; -webkit-overflow-scrolling:touch;
+    background: linear-gradient(#ffffff, #ffffff) padding-box,
+                linear-gradient(180deg, rgba(0,0,0,0.04), transparent 24px) border-box;
+  }
+  .scroll-card h3 { position: sticky; top: 0; background: var(--card); padding-bottom:6px; margin-top:0; }
+
+  canvas { width:100%; height:260px; }
+
+  /* Table: pan + sticky headers */
+  .table-wrap { overflow:auto; max-height: calc(var(--vh, 1vh) * 40); -webkit-overflow-scrolling:touch; border:1px solid #e5e7eb; border-radius:12px; }
+  table { width:100%; border-collapse: collapse; font-size:14px; min-width: 720px; }
+  th, td { padding:10px 8px; border-bottom:1px solid #eee; text-align:left; }
+  th { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; position: sticky; top: 0; background: #fff; z-index: 1; }
+
+  @media (pointer: coarse) { .toolbar input, .toolbar select, .toolbar button { padding:12px 14px; font-size:16px; } }
+  @media (max-width: 960px){ .grid-4, .grid-3 { grid-template-columns: 1fr; } canvas { height: 200px; } .scroll-card { max-height: calc(var(--vh, 1vh) * 32); } }
+  /* Card view for balances on narrow phones */
+  @media (max-width: 720px){
+    table { min-width: 0; }
+    table thead { display: none; }
+    table, tbody, tr, td { display:block; width: 100%; }
+    tr { border-bottom: 1px solid #eee; margin: 6px 0; padding: 8px 6px; border-radius: 8px; background: #fff; }
+    td { border-bottom: none; padding: 6px 0; }
+    td::before { content: attr(data-label); display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:2px; }
+  }
+</style>
 </head>
 <body>
-  <header><h1>Holland Homes — PTO & Coverage (Daily)</h1></header>
-  <div class="wrap">
-    <div class="toolbar card" style="justify-content:space-between;">
-      <div class="toolbar">
-        <label>Date:
-          <input id="dateInput" type="date" />
-        </label>
-        <label>Team:
-          <select id="teamFilter"><option value="">All Teams</option></select>
-        </label>
-        <label>Search:
-          <input id="searchInput" type="search" placeholder="Name or role…" />
-        </label>
-      </div>
-      <div class="toolbar">
-        <button id="refreshBtn">Reload Data</button>
-        <span class="footer">Data refreshes daily from CSV • <span id="asOf"></span></span>
-      </div>
-    </div>
+<header><h1>Holland Homes — PTO Requests (Daily)</h1></header>
 
-    <div class="row grid-4">
-      <div class="card kpi"><span class="big" id="outToday">0</span><span class="label">Out (Selected Day)</span></div>
-      <div class="card kpi"><span class="big" id="teamsImpacted">0</span><span class="label">Teams Impacted</span></div>
-      <div class="card kpi"><span class="big" id="coveragePct">100%</span><span class="label">Coverage</span></div>
-      <div class="card kpi"><span class="big" id="next7">0</span><span class="label">Upcoming (Next 7 Days)</span></div>
-    </div>
+<div class="wrap">
 
-    <div class="row grid-3" style="margin-top:16px;">
-      <div class="card">
-        <h3 style="margin:0 0 8px;">Who’s Out</h3>
-        <ul class="list" id="outList"></ul>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 8px;">Next 7 Days</h3>
-        <ul class="list" id="nextList"></ul>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 8px;">Coverage by Team (Next 7 Days)</h3>
-        <canvas id="coverageChart" aria-label="Coverage by team"></canvas>
-      </div>
+  <div class="toolbar card" style="justify-content:space-between;">
+    <div class="toolbar">
+      <label>Date: <input id="dateInput" type="date" /></label>
+      <label>Department: <select id="deptFilter"><option value="">All</option></select></label>
+      <label>Manager: <select id="mgrFilter"><option value="">All</option></select></label>
+      <label>Type: 
+        <select id="typeFilter">
+          <option value="">All</option>
+          <option>Vacation</option><option>Sick</option><option>Unpaid</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="approvedOnly"/> Approved only</label>
+      <label>Search: <input id="searchInput" type="search" placeholder="Name, dept, manager…" /></label>
     </div>
+    <div class="toolbar">
+      <button id="refreshBtn" type="button">Reload Data</button>
+      <span class="footer">From CSV • <span id="asOf"></span></span>
+    </div>
+  </div>
 
-    <div class="card" style="margin-top:16px;">
-      <h3 style="margin:0 0 8px;">Balances (Reference)</h3>
+  <div class="row grid-4">
+    <div class="card kpi"><span class="big" id="outToday">0</span><span class="label">Out (Selected Day)</span></div>
+    <div class="card kpi"><span class="big" id="deptsImpacted">0</span><span class="label">Depts Impacted</span></div>
+    <div class="card kpi"><span class="big" id="coveragePct">100%</span><span class="label">Coverage</span></div>
+    <div class="card kpi"><span class="big" id="upcoming7">0</span><span class="label">Upcoming (7 Days)</span></div>
+  </div>
+
+  <div class="row grid-3" style="margin-top:12px;">
+    <div class="card scroll-card">
+      <h3>Who’s Out</h3>
+      <ul class="list" id="outList"></ul>
+    </div>
+    <div class="card scroll-card">
+      <h3>Next 7 Days</h3>
+      <ul class="list" id="nextList"></ul>
+    </div>
+    <div class="card scroll-card">
+      <h3>Coverage Risk by Department (Selected Day)</h3>
+      <canvas id="coverageChart" aria-label="Coverage by department"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <h3 style="margin:0 0 6px;">Balances (Reference)</h3>
+    <div class="table-wrap">
       <table id="balTable">
         <thead>
           <tr>
-            <th>Employee</th><th>Team</th><th>Role</th><th>Manager</th><th>PTO Balance (hrs)</th><th>Last Updated</th>
+            <th>Employee</th><th>Team/Dept</th><th>Manager</th><th>PTO Balance (hrs)</th><th>Last Updated</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-      <div class="footer">Balances are informational; approval still follows normal process.</div>
     </div>
+    <div class="toolbar" style="margin-top:8px;">
+      <a href="./pto_requests_2025.csv" download>⬇️ Download pto_requests_2025.csv</a>
+      <a href="./pto_balances.csv" download>⬇️ Download pto_balances.csv</a>
+    </div>
+    <div class="footer">Balances are informational; approvals follow the normal process.</div>
   </div>
+</div>
 
-  <!-- CSV parsing + charts -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script>
-    // ====== CONFIG ======
-    // If hosting pto.csv in same repo root: use './pto.csv'
-    // If hosting in /data: use './data/pto.csv'
-    // For raw GitHub URL, use: 'https://raw.githubusercontent.com/<org>/<repo>/<branch>/pto.csv'
-    const PTO_CSV_URL = './pto.csv';
-    const BALANCES_CSV_URL = './pto_balances.csv'; // optional; fallback if missing
+<script>
+  // real mobile viewport unit (iOS Safari)
+  function setVH(){ const vh=window.innerHeight*0.01; document.documentElement.style.setProperty('--vh', vh+'px'); }
+  window.addEventListener('resize', setVH); window.addEventListener('orientationchange', setVH); setVH();
+</script>
 
-    // ====== UTIL ======
-    const fmt = (d) => new Date(d + "T00:00:00");
-    const todayISO = () => new Date().toISOString().slice(0,10);
-    const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
-    const iso = (d) => d.toISOString().slice(0,10);
-    const within = (d, a, b) => d >= a && d <= b;
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  // ===== CONFIG =====
+  const REQUESTS_CSV = './pto_requests_2025.csv';
+  const BALANCES_CSV = './pto_balances.csv'; // optional
 
-    // ====== STATE ======
-    let PTO = [];        // rows of PTO events
-    let BAL = [];        // rows of balances
-    let teams = new Set();
-    let coverageChart;
-
-    // ====== DOM ======
-    const dateInput = document.getElementById('dateInput');
-    const teamFilter = document.getElementById('teamFilter');
-    const searchInput = document.getElementById('searchInput');
-    const refreshBtn = document.getElementById('refreshBtn');
-
-    const outTodayEl = document.getElementById('outToday');
-    const teamsImpactedEl = document.getElementById('teamsImpacted');
-    const coveragePctEl = document.getElementById('coveragePct');
-    const next7El = document.getElementById('next7');
-
-    const outList = document.getElementById('outList');
-    const nextList = document.getElementById('nextList');
-    const asOf = document.getElementById('asOf');
-
-    const balTableBody = document.querySelector('#balTable tbody');
-
-    // ====== LOADERS ======
-    async function loadCSV(url) {
-      const cacheBust = '?v=' + todayISO(); // daily refresh
-      const res = await fetch(url + cacheBust, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to fetch ' + url);
-      const text = await res.text();
-      return new Promise((resolve) => {
-        Papa.parse(text, { header:true, skipEmptyLines:true, complete: (out)=> resolve(out.data) });
-      });
+  // ===== UTIL =====
+  const todayISO = () => new Date().toISOString().slice(0,10);
+  function parseDate(d){
+    if(!d) return null;
+    // Accept "MM/DD/YYYY" or "YYYY-MM-DD"
+    if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)){
+      const [m,dd,y] = d.split('/').map(s=>parseInt(s,10));
+      return new Date(y, m-1, dd);
+    } else {
+      const t = new Date(d);
+      return isNaN(t) ? null : t;
     }
+  }
+  function dayISO(d){ return d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10) : ''; }
+  const clamp = (n,min,max)=> Math.max(min, Math.min(max, n));
+  const num = (x)=> { const n = parseFloat(String(x||'').toString().replace(/[,]/g,'')); return isNaN(n)?0:n; };
+  const isHalf = (ampm)=> (String(ampm||'').toUpperCase()==='AM' || String(ampm||'').toUpperCase()==='PM');
 
-    async function init() {
-      dateInput.value = todayISO();
-      try {
-        PTO = await loadCSV(PTO_CSV_URL);
-      } catch (e) {
-        console.error(e);
-        PTO = [];
-      }
-      try {
-        BAL = await loadCSV(BALANCES_CSV_URL);
-      } catch (e) {
-        // Balances are optional; ignore if not found
-        BAL = [];
-      }
-      asOf.textContent = 'As of ' + new Date().toLocaleString();
+  // Count whether selected date overlaps a request (respect AM/PM edges)
+  function overlapsSelectedDay(sel, startDate, startHalf, endDate, endHalf){
+    if(!startDate || !endDate) return false;
+    const sISO = dayISO(startDate), eISO = dayISO(endDate), dISO = dayISO(sel);
+    if(dISO < sISO || dISO > eISO) return false;
+    // if exactly on start or end, treat half-day as still "out" for that date
+    return true;
+  }
 
-      // Collect teams
-      PTO.forEach(r => { if (r.Team) teams.add(r.Team); });
-      BAL.forEach(r => { if (r.Team) teams.add(r.Team); });
-      [...teams].sort().forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t; opt.textContent = t;
-        teamFilter.appendChild(opt);
-      });
+  function withinRange(start, end, a, b){ return (end >= a) && (start <= b); }
 
-      renderAll();
+  async function loadCSV(url){
+    const res = await fetch(url + '?v=' + todayISO(), { cache:'no-store' });
+    if(!res.ok) throw new Error('fetch failed ' + url);
+    const text = await res.text();
+    return new Promise(resolve => Papa.parse(text, { header:true, skipEmptyLines:true, complete: out=>resolve(out.data) }));
+  }
+
+  // ===== STATE =====
+  let REQ = []; // PTO requests rows
+  let BAL = []; // balances rows
+  let coverageChart;
+
+  // ===== DOM =====
+  const dateInput = document.getElementById('dateInput');
+  const deptFilter = document.getElementById('deptFilter');
+  const mgrFilter = document.getElementById('mgrFilter');
+  const typeFilter = document.getElementById('typeFilter');
+  const approvedOnly = document.getElementById('approvedOnly');
+  const searchInput = document.getElementById('searchInput');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  const outTodayEl = document.getElementById('outToday');
+  const deptsImpactedEl = document.getElementById('deptsImpacted');
+  const coveragePctEl = document.getElementById('coveragePct');
+  const upcoming7El = document.getElementById('upcoming7');
+  const outList = document.getElementById('outList');
+  const nextList = document.getElementById('nextList');
+  const balTableBody = document.querySelector('#balTable tbody');
+  const asOf = document.getElementById('asOf');
+
+  function isApprovedRow(r){
+    const t = String(r['PTO Request Type']||'').toLowerCase();
+    if(t==='vacation') return num(r['Vacation Approved'])>0;
+    if(t==='sick')     return num(r['Sick Approved'])>0;
+    if(t==='unpaid')   return num(r['Unpaid Approved'])>0;
+    // fallback: if any approved col > 0
+    return (num(r['Vacation Approved'])+num(r['Sick Approved'])+num(r['Unpaid Approved']))>0;
+  }
+
+  function passesFilters(r){
+    const d = (deptFilter.value||'').toLowerCase();
+    const m = (mgrFilter.value||'').toLowerCase();
+    const t = (typeFilter.value||'').toLowerCase();
+    const q = (searchInput.value||'').toLowerCase();
+    if(d && String(r['Department']||'').toLowerCase().trim()!==d) return false;
+    if(m && String(r['Direct Report']||'').toLowerCase().trim()!==m) return false;
+    if(t && String(r['PTO Request Type']||'').toLowerCase().trim()!==t) return false;
+    if(approvedOnly.checked && !isApprovedRow(r)) return false;
+
+    if(q){
+      const blob = [
+        r['Employee Name'], r['Department'], r['Direct Report'], r['PTO Request Type'],
+        r['PTO Request Start Date'], r['PTO Request End Date']
+      ].map(x=>String(x||'').toLowerCase()).join('|');
+      if(!blob.includes(q)) return false;
     }
+    return true;
+  }
 
-    function subsetFilters(row) {
-      const team = teamFilter.value.trim().toLowerCase();
-      const q = searchInput.value.trim().toLowerCase();
-      if (team && (row.Team||'').toLowerCase() !== team) return false;
-      if (q) {
-        const blob = [row.Employee, row.Team, row.Role, row.Manager, row.Reason].map(x=>(x||'').toLowerCase()).join('|');
-        if (!blob.includes(q)) return false;
-      }
-      return true;
-    }
+  function requestDurationDays(r){
+    // Prefer your provided total; use half-day inference if needed
+    let days = num(r['PTO Request Total Days']);
+    if(days>0) return days;
+    const s = parseDate(r['PTO Request Start Date']);
+    const e = parseDate(r['PTO Request End Date']);
+    if(!s || !e) return 0;
+    let diff = (e - s)/(1000*60*60*24) + 1; // inclusive
+    // half-day at boundaries? (rough heuristic)
+    const sh = String(r['Start AM/PM']||'').toUpperCase();
+    const eh = String(r['End AM/PM']||'').toUpperCase();
+    if(isHalf(sh)) diff -= 0.5;
+    if(isHalf(eh)) diff -= 0.5;
+    return clamp(diff, 0, 365);
+  }
 
-    function renderAll() {
-      const selectedDay = fmt(dateInput.value || todayISO());
-      const start = selectedDay;
-      const end7 = addDays(selectedDay, 7);
+  function normalizeRow(r){
+    return {
+      emp: r['Employee Name']||'',
+      dept: r['Department']||'Unknown',
+      mgr: r['Direct Report']||'',
+      type: r['PTO Request Type']||'',
+      s: parseDate(r['PTO Request Start Date']),
+      e: parseDate(r['PTO Request End Date']),
+      sh: r['Start AM/PM']||'',
+      eh: r['End AM/PM']||'',
+      days: requestDurationDays(r),
+      approved: isApprovedRow(r),
+      raw: r
+    };
+  }
 
-      // ----- Out today -----
-      const out = PTO.filter(r => {
-        if (!r.Start || !r.End) return false;
-        const s = fmt(r.Start);
-        const e = fmt(r.End);
-        return within(selectedDay, s, e) && subsetFilters(r);
-      });
+  async function init(){
+    dateInput.value = todayISO();
+    try { REQ = (await loadCSV(REQUESTS_CSV)).map(normalizeRow); } catch(e){ REQ = []; console.error(e); }
+    try { BAL = await loadCSV(BALANCES_CSV); } catch(e){ BAL = []; /* optional */ }
+    asOf.textContent = new Date().toLocaleString();
 
-      outTodayEl.textContent = out.length;
-      const teamsHit = new Set(out.map(r => r.Team));
-      teamsImpactedEl.textContent = teamsHit.size;
+    // Build filter dropdowns (de-duped)
+    const depts = [...new Set(REQ.map(r=>r.dept.trim()).filter(Boolean))].sort();
+    const mgrs  = [...new Set(REQ.map(r=>r.mgr.trim()).filter(Boolean))].sort();
+    deptFilter.innerHTML = '<option value="">All</option>' + depts.map(d=>`<option>${d}</option>`).join('');
+    mgrFilter.innerHTML  = '<option value="">All</option>' + mgrs.map(x=>`<option>${x}</option>`).join('');
 
-      outList.innerHTML = '';
-      out.sort((a,b)=> (a.Team||'').localeCompare(b.Team||''));
-      out.forEach(r => {
-        const li = document.createElement('li');
-        const left = document.createElement('div');
-        left.textContent = `${r.Employee || '—'} (${r.Role || '—'})`;
-        const right = document.createElement('div');
-        right.innerHTML = `<span class="pill">${r.Team || 'Team'}</span> <span class="muted">${r.Reason || 'PTO'}</span>`;
-        li.appendChild(left); li.appendChild(right);
-        outList.appendChild(li);
-      });
+    renderAll();
+  }
 
-      // ----- Next 7 days -----
-      const upcoming = PTO.filter(r => {
-        if (!r.Start || !r.End) return false;
-        const s = fmt(r.Start);
-        const e = fmt(r.End);
-        // Any overlap with [start, end7]
-        const overlap = e >= start && s <= end7;
-        return overlap && subsetFilters(r);
-      });
+  function renderAll(){
+    const selected = parseDate(dateInput.value) || new Date();
+    const start7 = new Date(selected); const end7 = new Date(selected); end7.setDate(end7.getDate()+7);
 
-      next7El.textContent = upcoming.length;
-      nextList.innerHTML = '';
-      upcoming.sort((a,b)=> fmt(a.Start)-fmt(b.Start));
-      upcoming.forEach(r=>{
-        const li = document.createElement('li');
-        const left = document.createElement('div');
-        const range = `${r.Start} → ${r.End}`;
-        left.textContent = `${r.Employee || '—'} • ${range}`;
-        const right = document.createElement('div');
-        right.innerHTML = `<span class="pill">${r.Team || 'Team'}</span> <span class="muted">${r.Reason || 'PTO'}</span>`;
-        li.appendChild(left); li.appendChild(right);
-        nextList.appendChild(li);
-      });
+    // Today out
+    const out = REQ.filter(r => passesFilters(r) && overlapsSelectedDay(selected, r.s, r.sh, r.e, r.eh));
+    outTodayEl.textContent = out.length;
+    const deptsHit = new Set(out.map(x=>x.dept));
+    deptsImpactedEl.textContent = deptsHit.size;
 
-      // ----- Coverage -----
-      // Assume BAL (or PTO) includes headcount per team via distinct employees in balances.
-      const byTeam = {};
-      const headcount = {};
-      (BAL.length ? BAL : PTO).forEach(r => {
-        const t = r.Team || 'Unknown';
+    outList.innerHTML = '';
+    out.sort((a,b)=> (a.dept||'').localeCompare(b.dept||''));
+    out.forEach(r=>{
+      const li = document.createElement('li');
+      const left = document.createElement('div');
+      const right = document.createElement('div');
+      left.textContent = `${r.emp} (${r.type||'PTO'})`;
+      right.innerHTML = `<span class="pill">${r.dept}</span> <span class="muted">${dayISO(r.s)} → ${dayISO(r.e)}${r.approved?' • Approved':''}</span>`;
+      li.appendChild(left); li.appendChild(right);
+      outList.appendChild(li);
+    });
+
+    // Upcoming 7 days
+    const upcoming = REQ.filter(r => passesFilters(r) && withinRange(r.s, r.e, start7, end7));
+    upcoming7El.textContent = upcoming.length;
+    nextList.innerHTML = '';
+    upcoming.sort((a,b)=> a.s-b.s);
+    upcoming.forEach(r=>{
+      const li = document.createElement('li');
+      li.innerHTML = `<div>${r.emp} • ${dayISO(r.s)} → ${dayISO(r.e)} (${r.days}d)</div>
+                      <div><span class="pill">${r.dept}</span> <span class="muted">${r.type}${r.approved?' • Approved':''}</span></div>`;
+      nextList.appendChild(li);
+    });
+
+    // Coverage risk by department (selected day)
+    const headcount = {}; // from balances if present, else inferred from requests
+    if (BAL.length){
+      BAL.forEach(b=>{
+        const t = (b.Team || b.Department || 'Unknown').trim();
         headcount[t] = headcount[t] || new Set();
-        headcount[t].add(r.Employee || r.EmpID || '???');
+        headcount[t].add(b.Employee || b.EmpID || '');
       });
-
-      Object.keys(headcount).forEach(t => { byTeam[t] = 0; });
-
-      out.forEach(r => {
-        const t = r.Team || 'Unknown';
-        byTeam[t] = (byTeam[t] || 0) + 1;
-      });
-
-      const labels = Object.keys(headcount).sort();
-      const coverage = labels.map(t => {
-        const total = headcount[t] ? headcount[t].size : 0;
-        const outN = byTeam[t] || 0;
-        return total > 0 ? Math.max(0, Math.round((1 - outN/total)*100)) : 100;
-      });
-
-      // Overall coverage %
-      const totals = labels.reduce((acc,t)=> acc + (headcount[t]? headcount[t].size:0), 0);
-      const outs = Object.values(byTeam).reduce((a,b)=> a+b, 0);
-      const cov = totals>0 ? Math.round((1 - outs/totals)*100) : 100;
-      coveragePctEl.textContent = cov + '%';
-      coveragePctEl.className = cov < 80 ? 'big warn' : 'big ok';
-
-      // Chart
-      const ctx = document.getElementById('coverageChart');
-      if (coverageChart) coverageChart.destroy();
-      coverageChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Coverage %', data: coverage }] },
-        options: {
-          responsive: true,
-          plugins: { legend: { display:false } },
-          scales: { y: { beginAtZero:true, max:100, ticks: { callback: v => v + '%' } } }
-        }
-      });
-
-      // ----- Balances table -----
-      balTableBody.innerHTML = '';
-      BAL.filter(subsetFilters).forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${r.Employee||''}</td>
-          <td>${r.Team||''}</td>
-          <td>${r.Role||''}</td>
-          <td>${r.Manager||''}</td>
-          <td>${r.PTO_Balance_Hours||''}</td>
-          <td class="muted">${r.LastUpdated||''}</td>
-        `;
-        balTableBody.appendChild(tr);
+    } else {
+      REQ.forEach(r=>{
+        headcount[r.dept] = headcount[r.dept] || new Set();
+        headcount[r.dept].add(r.emp);
       });
     }
+    const outByDept = {};
+    out.forEach(r=>{ outByDept[r.dept] = (outByDept[r.dept]||0) + 1; });
+    const labels = Object.keys(headcount).sort();
+    const cover = labels.map(d=>{
+      const total = headcount[d] ? headcount[d].size : 0;
+      const outs = outByDept[d]||0;
+      return total>0 ? Math.round((1 - outs/total)*100) : 100;
+    });
+    const totals = labels.reduce((a,d)=> a + (headcount[d]? headcount[d].size:0), 0);
+    const outsAll = Object.values(outByDept).reduce((a,b)=>a+b,0);
+    const covAll = totals>0 ? Math.round((1 - outsAll/totals)*100) : 100;
+    coveragePctEl.textContent = covAll + '%';
+    coveragePctEl.className = covAll<80 ? 'big warn' : 'big ok';
 
-    // ====== EVENTS ======
-    dateInput.addEventListener('change', renderAll);
-    teamFilter.addEventListener('change', renderAll);
-    searchInput.addEventListener('input', renderAll);
-    refreshBtn.addEventListener('click', init);
+    // Chart
+    const ctx = document.getElementById('coverageChart');
+    if (window._chart) window._chart.destroy();
+    window._chart = new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'Coverage %', data: cover }] },
+      options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' } } } }
+    });
 
-    // ====== START ======
-    init();
-  </script>
+    // Balances (optional)
+    balTableBody.innerHTML = '';
+    (BAL||[]).forEach(b=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="Employee">${b.Employee||''}</td>
+        <td data-label="Team/Dept">${b.Team||b.Department||''}</td>
+        <td data-label="Manager">${b.Manager||''}</td>
+        <td data-label="PTO Balance (hrs)">${b.PTO_Balance_Hours||''}</td>
+        <td data-label="Last Updated" class="muted">${b.LastUpdated||''}</td>
+      `;
+      balTableBody.appendChild(tr);
+    });
+  }
+
+  // Events
+  dateInput.addEventListener('change', renderAll);
+  deptFilter.addEventListener('change', renderAll);
+  mgrFilter.addEventListener('change', renderAll);
+  typeFilter.addEventListener('change', renderAll);
+  approvedOnly.addEventListener('change', renderAll);
+  searchInput.addEventListener('input', renderAll);
+  document.getElementById('refreshBtn').addEventListener('click', init);
+
+  // Start
+  init();
+</script>
 </body>
 </html>
