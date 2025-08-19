@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Holland Homes • PTO Requests (Range)</title>
+<title>Holland Homes • PTO Dashboard</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
 <style>
@@ -16,6 +16,7 @@
   .row { display:grid; gap:12px; }
   .grid-4 { grid-template-columns: repeat(4, 1fr); }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
   .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; }
   .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   .toolbar input, .toolbar select, .toolbar button, .toolbar label { font-size:14px; }
@@ -49,7 +50,7 @@
   th { font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; position: sticky; top: 0; background: #fff; z-index: 1; }
 
   @media (pointer: coarse) { .toolbar input, .toolbar select, .toolbar button { padding:12px 14px; font-size:16px; } }
-  @media (max-width: 960px){ .grid-4, .grid-3 { grid-template-columns: 1fr; } canvas { height: 200px; } .scroll-card { max-height: calc(var(--vh, 1vh) * 32); } }
+  @media (max-width: 960px){ .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } canvas { height: 200px; } .scroll-card { max-height: calc(var(--vh, 1vh) * 32); } }
   /* Card view for balances on narrow phones */
   @media (max-width: 720px){
     table { min-width: 0; }
@@ -64,7 +65,7 @@
 </style>
 </head>
 <body>
-<header><h1>Holland Homes — PTO Requests (Range)</h1></header>
+<header><h1>Holland Homes — PTO Dashboard</h1></header>
 
 <div class="wrap">
 
@@ -101,46 +102,55 @@
 
   <!-- KPIs -->
   <div class="row grid-4">
-    <div class="card kpi"><span class="big" id="kpiRequests">0</span><span class="label">Requests in Range</span></div>
+    <div class="card kpi"><span class="big" id="kpiRequests">0</span><span class="label">Requests</span></div>
     <div class="card kpi"><span class="big" id="kpiPeople">0</span><span class="label">Unique Employees</span></div>
-    <div class="card kpi"><span class="big" id="kpiDepts">0</span><span class="label">Depts Impacted</span></div>
+    <div class="card kpi"><span class="big" id="kpiDepts">0</span><span class="label">Departments</span></div>
     <div class="card kpi"><span class="big" id="kpiDays">0</span><span class="label">Total Person‑Days</span></div>
   </div>
 
   <!-- Lists + Chart -->
   <div class="row grid-3" style="margin-top:12px;">
     <div class="card scroll-card">
-      <h3>Requests (Overlapping Range)</h3>
+      <h3>Requests</h3>
       <ul class="list" id="reqList"></ul>
     </div>
     <div class="card scroll-card">
-      <h3>By Employee (Totals in Range)</h3>
+      <h3>By Employee</h3>
       <ul class="list" id="empList"></ul>
     </div>
     <div class="card scroll-card">
-      <h3>By Team in Range</h3>
+      <h3>By Team</h3>
       <canvas id="deptChart" aria-label="Requests by team"></canvas>
     </div>
   </div>
 
-  <!-- Balances -->
-  <div class="card" style="margin-top:12px;">
-    <h3 style="margin:0 0 6px;">Balances (Reference)</h3>
-    <div class="table-wrap">
-      <table id="balTable">
-        <thead>
-          <tr>
-            <th>Employee</th><th>Team/Dept</th><th>Manager</th><th>PTO Balance (hrs)</th><th>Last Updated</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <!-- Burnout Radar + Balances -->
+  <div class="row grid-2" style="margin-top:12px;">
+    <div class="card scroll-card">
+      <h3>Burnout Radar (±60 days)</h3>
+      <div class="muted" style="margin:4px 0 8px;">People with no PTO in the last 60 days and none scheduled in the next 60 days.</div>
+      <ul class="list" id="burnoutList"></ul>
+      <div class="footer"><span id="burnoutCount">0</span> employee(s) flagged</div>
     </div>
-    <div class="toolbar" style="margin-top:8px;">
-      <a href="./pto_requests_2025.csv" download>⬇️ Download pto_requests_2025.csv</a>
-      <a href="./pto_balances.csv" download>⬇️ Download pto_balances.csv</a>
+
+    <div class="card">
+      <h3 style="margin:0 0 6px;">Balances (Reference)</h3>
+      <div class="table-wrap">
+        <table id="balTable">
+          <thead>
+            <tr>
+              <th>Employee</th><th>Team/Dept</th><th>Manager</th><th>PTO Balance (hrs)</th><th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="toolbar" style="margin-top:8px;">
+        <a href="./pto_requests_2025.csv" download>⬇️ Download pto_requests_2025.csv</a>
+        <a href="./pto_balances.csv" download>⬇️ Download pto_balances.csv</a>
+      </div>
+      <div class="footer">Balances are informational; approvals follow the normal process.</div>
     </div>
-    <div class="footer">Balances are informational; approvals follow the normal process.</div>
   </div>
 </div>
 
@@ -160,7 +170,7 @@
   // ===== UTIL =====
   const MS_DAY = 24*60*60*1000;
   const todayISO = () => new Date().toISOString().slice(0,10);
-  const addDays = (d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+  const addDays = (d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
 
   function parseDate(d){
     if(!d) return null;
@@ -180,11 +190,8 @@
     const start = a < R1 ? R1 : a;
     const end   = b > R2 ? R2 : b;
     let days = Math.floor((end - start)/MS_DAY) + 1;
-
-    // Half-day adjust only if the overlap includes the actual boundary day
     if(dayISO(start)===dayISO(a) && isHalf(r.sh)) days -= 0.5;
     if(dayISO(end)  ===dayISO(b) && isHalf(r.eh)) days -= 0.5;
-
     return Math.max(0, days);
   }
 
@@ -220,6 +227,9 @@
   const reqList = document.getElementById('reqList');
   const empList = document.getElementById('empList');
   const balTableBody = document.querySelector('#balTable tbody');
+
+  const burnoutList = document.getElementById('burnoutList');
+  const burnoutCount = document.getElementById('burnoutCount');
 
   function normalizeRow(r){
     return {
@@ -269,6 +279,7 @@
     mgrFilter.innerHTML  = '<option value="">All</option>' + mgrs.map(m=>`<option>${m}</option>`).join('');
 
     renderAll();
+    renderBurnoutRadar(); // compute once on load (based on "today")
   }
 
   function renderAll(){
@@ -276,7 +287,7 @@
     const re = parseDate(dateTo.value)   || rs;
     if(re < rs) { dateTo.value = dateFrom.value; return; }
 
-    // Filter rows and compute overlap days within range
+    // Filter rows and compute overlap days within selected range
     const rows = REQ
       .filter(r => passesFilters(r))
       .map(r => ({...r, overlapDays: overlapDaysInRange(r, rs, re)}))
@@ -296,7 +307,7 @@
       .forEach(r=>{
         const li=document.createElement('li');
         li.innerHTML = `<div>${r.emp} • ${r.type}</div>
-                        <div><span class="pill">${r.dept}</span> <span class="muted">${dayISO(r.s)} → ${dayISO(r.e)} • ${r.overlapDays}d in range</span></div>`;
+                        <div><span class="pill">${r.dept}</span> <span class="muted">${dayISO(r.s)} → ${dayISO(r.e)} • ${r.overlapDays}d</span></div>`;
         reqList.appendChild(li);
       });
 
@@ -311,7 +322,7 @@
       empList.appendChild(li);
     });
 
-    // Chart: requests (or person-days) by department in range
+    // Chart: person-days by department
     const byDept = {};
     rows.forEach(r=>{ byDept[r.dept] = (byDept[r.dept]||0) + r.overlapDays; });
     const labels = Object.keys(byDept).sort();
@@ -321,7 +332,7 @@
     if(window._deptChart) window._deptChart.destroy();
     window._deptChart = new Chart(ctx, {
       type:'bar',
-      data:{ labels, datasets:[{ label:'Person‑Days in Range', data }] },
+      data:{ labels, datasets:[{ label:'Person‑Days', data }] },
       options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
     });
 
@@ -340,8 +351,90 @@
     });
   }
 
-  // Events
-  document.getElementById('refreshBtn').addEventListener('click', init);
+  // ===== Burnout Radar (±60 days around TODAY) =====
+  function renderBurnoutRadar(){
+    const today = dayStart(new Date());
+    const winStart = addDays(today, -60);
+    const winEnd   = addDays(today,  60);
+
+    // Build headcount from balances if available; fallback to names seen in requests
+    const roster = new Map(); // name -> {dept, mgr}
+    if(BAL.length){
+      BAL.forEach(b=>{
+        const name = String(b.Employee||'').trim();
+        if(!name) return;
+        roster.set(name, {
+          dept: String(b.Team||b.Department||'Unknown').trim(),
+          mgr:  String(b.Manager||'').trim()
+        });
+      });
+    } else {
+      REQ.forEach(r=>{ roster.set(r.emp, {dept:r.dept, mgr:r.mgr}); });
+    }
+
+    // Index requests by employee
+    const byEmp = {};
+    REQ.forEach(r=>{
+      if(!byEmp[r.emp]) byEmp[r.emp]=[];
+      byEmp[r.emp].push(r);
+    });
+
+    // A person is "OK" if any request overlaps [today-60, today+60]
+    function hasPTOinWindow(emp){
+      const list = byEmp[emp]||[];
+      for(const r of list){
+        const overlap = overlapDaysInRange(r, winStart, winEnd);
+        if(overlap > 0) return true;
+      }
+      return false;
+    }
+
+    // For display: last past PTO end date + next future start date
+    function pastFuture(emp){
+      const list = (byEmp[emp]||[]).filter(r=>r.s && r.e);
+      let lastPast=null, nextFuture=null;
+      list.forEach(r=>{
+        if(r.e <= today){ if(!lastPast || r.e > lastPast) lastPast = r.e; }
+        if(r.s >= today){ if(!nextFuture || r.s < nextFuture) nextFuture = r.s; }
+      });
+      return { lastPast, nextFuture };
+    }
+
+    const flagged = [];
+    roster.forEach((meta, name)=>{
+      if(!hasPTOinWindow(name)){
+        const pf = pastFuture(name);
+        flagged.push({
+          name,
+          dept: meta.dept||'',
+          mgr: meta.mgr||'',
+          last: pf.lastPast,
+          next: pf.nextFuture,
+          daysSince: pf.lastPast ? Math.floor((today - dayStart(pf.lastPast))/MS_DAY) : null
+        });
+      }
+    });
+
+    flagged.sort((a,b)=>{
+      // Prioritize longest since last PTO, then by name
+      const da = (a.daysSince ?? -1), db = (b.daysSince ?? -1);
+      if(db !== da) return db - da;
+      return a.name.localeCompare(b.name);
+    });
+
+    burnoutList.innerHTML='';
+    flagged.forEach(x=>{
+      const li=document.createElement('li');
+      const left = `${x.name} ${x.dept?`• ${x.dept}`:''}`;
+      const right = `<span class="muted">Last: ${x.last?x.last.toLocaleDateString():'—'} • Next: ${x.next?x.next.toLocaleDateString():'—'}${x.daysSince!=null?` • ${x.daysSince}d since`:''}</span>`;
+      li.innerHTML = `<div>${left}</div><div>${right}</div>`;
+      burnoutList.appendChild(li);
+    });
+    burnoutCount.textContent = flagged.length;
+  }
+
+  // ===== Events =====
+  document.getElementById('refreshBtn').addEventListener('click', ()=>{ init(); });
   dateFrom.addEventListener('change', renderAll);
   dateTo.addEventListener('change', renderAll);
   deptFilter.addEventListener('change', renderAll);
