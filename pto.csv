@@ -1,0 +1,6 @@
+Employee,EmpID,Team,Role,Manager,Start,End,Reason
+Jane Smith,1001,Production,Project Leader,Mitchell Beers,2025-08-18,2025-08-18,PTO
+John Doe,1002,People,HR Generalist,Director of People,2025-08-19,2025-08-21,Sick
+Mary Johnson,1003,Sales,Sales Associate,Director of Sales,2025-08-20,2025-08-20,Vacation
+Chris Lee,1004,Finance,Accountant,Clay Messer,2025-08-21,2025-08-22,Conference
+Alex Brown,1005,Production,Superintendent,Mitchell Beers,2025-08-22,2025-08-22,Personal
