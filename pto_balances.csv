@@ -1,0 +1,6 @@
+Employee,EmpID,Team,Role,Manager,PTO_Balance_Hours,LastUpdated
+Jane Smith,1001,Production,Project Leader,Mitchell Beers,56,2025-08-18
+John Doe,1002,People,HR Generalist,Director of People,32,2025-08-18
+Mary Johnson,1003,Sales,Sales Associate,Director of Sales,12,2025-08-18
+Chris Lee,1004,Finance,Accountant,Clay Messer,64,2025-08-18
+Alex Brown,1005,Production,Superintendent,Mitchell Beers,24,2025-08-18
